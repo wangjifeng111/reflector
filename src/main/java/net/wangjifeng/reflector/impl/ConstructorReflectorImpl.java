@@ -38,9 +38,11 @@ public class ConstructorReflectorImpl<T> implements ConstructorReflector<T> {
     public T newInstance(Object... constructorParameters) {
         return ReflectException.unawareException(() -> {
             if (!isPublic()) {
-                this.constructor.setAccessible(true);
+                if (this.constructor.trySetAccessible()) {
+                    return this.constructor.newInstance(constructorParameters);
+                }
             }
-            return this.constructor.newInstance(constructorParameters);
+            throw new ReflectException(String.format("尝试执行Constructor:%s失败", this.constructor.toString()));
         });
     }
 
@@ -107,8 +109,8 @@ public class ConstructorReflectorImpl<T> implements ConstructorReflector<T> {
     }
 
     private List<ParameterReflector> initParameterReflectors() {
-        Parameter[] parameters = this.constructor.getParameters();
-        List<ParameterReflector> parameterReflectorList = new ArrayList<>(parameters.length);
+        var parameters = this.constructor.getParameters();
+        var parameterReflectorList = new ArrayList<ParameterReflector>(parameters.length);
         for (int i = 0; i < parameters.length; i++) {
             parameterReflectorList.add(new ParameterReflectorImpl(parameters[i], i, this.constructorParamGenerics[i]));
         }

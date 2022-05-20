@@ -2,6 +2,7 @@ package net.wangjifeng.reflector.impl;
 
 import net.wangjifeng.reflector.MethodReflector;
 import net.wangjifeng.reflector.ParameterReflector;
+import net.wangjifeng.reflector.ReturnValueReflector;
 import net.wangjifeng.reflector.util.ReflectException;
 import net.wangjifeng.reflector.util.TypeParameterResolver;
 
@@ -30,11 +31,14 @@ public class MethodReflectorImpl<M> implements MethodReflector<M> {
 
     private final List<ParameterReflector> parameterReflectors;
 
+    private final ReturnValueReflector returnValueReflector;
+
     public MethodReflectorImpl(Method method) {
         this.method = method;
         this.methodParamGenerics = TypeParameterResolver.resolveMethodParamTypes(this.method, this.method.getDeclaringClass());
         this.returnTypeGeneric = TypeParameterResolver.resolveReturnType(this.method, this.method.getDeclaringClass());
         this.parameterReflectors = initParameterReflectors();
+        this.returnValueReflector = () -> this.returnTypeGeneric;
     }
 
     @Override
@@ -48,13 +52,20 @@ public class MethodReflectorImpl<M> implements MethodReflector<M> {
     }
 
     @Override
+    public ReturnValueReflector returnValueReflector() {
+        return this.returnValueReflector;
+    }
+
+    @Override
     @SuppressWarnings("unchecked")
     public M invoke(Object target, Object... methodParameters) {
         return ReflectException.unawareException(() -> {
             if (!isPublic()) {
-                this.method.setAccessible(true);
+                if (this.method.trySetAccessible()) {
+                    return (M) this.method.invoke(target, methodParameters);
+                }
             }
-            return (M) this.method.invoke(target, methodParameters);
+            throw new ReflectException(String.format("尝试执行Method:%s失败", this.method.toString()));
         });
     }
 
@@ -116,8 +127,8 @@ public class MethodReflectorImpl<M> implements MethodReflector<M> {
     }
 
     private List<ParameterReflector> initParameterReflectors() {
-        Parameter[] parameters = this.method.getParameters();
-        List<ParameterReflector> parameterReflectorList = new ArrayList<>(parameters.length);
+        var parameters = this.method.getParameters();
+        var parameterReflectorList = new ArrayList<ParameterReflector>(parameters.length);
         for (int i = 0; i < parameters.length; i++) {
             parameterReflectorList.add(new ParameterReflectorImpl(parameters[i], i, this.methodParamGenerics[i]));
         }

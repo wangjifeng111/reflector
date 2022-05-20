@@ -24,9 +24,9 @@ import java.util.StringJoiner;
  */
 public class ClassReflectorImpl<T> implements ClassReflector<T> {
 
-    private final Class<? extends T> klass;
+    private final Class<T> klass;
 
-    private final List<ConstructorReflector<? extends T>> constructorReflectors;
+    private final List<ConstructorReflector<T>> constructorReflectors;
 
     private final List<MethodReflector<?>> methodReflectors;
 
@@ -34,10 +34,10 @@ public class ClassReflectorImpl<T> implements ClassReflector<T> {
 
     @SuppressWarnings("unchecked")
     public ClassReflectorImpl(String className) {
-        this((Class<? extends T>) ReflectException.unawareException(() -> Class.forName(className)));
+        this((Class<T>) ReflectException.unawareException(() -> Class.forName(className)));
     }
 
-    public ClassReflectorImpl(Class<? extends T> klass) {
+    public ClassReflectorImpl(Class<T> klass) {
         this.klass = klass;
         this.constructorReflectors = initConstructorReflectors();
         this.methodReflectors = initMethodReflectors();
@@ -45,18 +45,18 @@ public class ClassReflectorImpl<T> implements ClassReflector<T> {
     }
 
     @Override
-    public List<ConstructorReflector<? extends T>> constructorReflectors() {
+    public List<ConstructorReflector<T>> constructorReflectors() {
         return this.constructorReflectors;
     }
 
     @Override
-    public ConstructorReflector<? extends T> constructorReflector(Class<?>... constructorParameterTypes) {
+    public ConstructorReflector<T> constructorReflector(Class<?>... constructorParameterTypes) {
         return this.constructorReflectors.stream()
                 .filter(constructorReflector -> constructorReflector.isThisConstructorReflector(constructorParameterTypes))
                 .findFirst()
                 .orElseThrow(() -> {
-                    String typeName = this.klass.getTypeName();
-                    StringJoiner parameters = new StringJoiner(", ", "(", ")");
+                    var typeName = this.klass.getTypeName();
+                    var parameters = new StringJoiner(", ", "(", ")");
                     Arrays.stream(constructorParameterTypes).forEach(constructorParameterType -> parameters.add(constructorParameterType.getTypeName()));
                     return new ReflectException(String.format("不存在一个构造方法: [%s%s]", typeName, parameters));
                 });
@@ -74,8 +74,8 @@ public class ClassReflectorImpl<T> implements ClassReflector<T> {
                 .filter(methodReflector -> methodReflector.isThisMethodReflector(methodName, methodParameterTypes))
                 .findFirst()
                 .orElseThrow(() -> {
-                    String typeName = this.klass.getTypeName();
-                    StringJoiner parameters = new StringJoiner(", ", "(", ")");
+                    var typeName = this.klass.getTypeName();
+                    var parameters = new StringJoiner(", ", "(", ")");
                     Arrays.stream(methodParameterTypes).forEach(methodParameterType -> parameters.add(methodParameterType.getTypeName()));
                     return new ReflectException(String.format("不存在一个方法: [%s.%s%s]", typeName, methodName, parameters));
                 });
@@ -93,7 +93,7 @@ public class ClassReflectorImpl<T> implements ClassReflector<T> {
                 .filter(fieldReflector -> fieldReflector.isThisFieldReflector(fieldName))
                 .findFirst()
                 .orElseThrow(() -> {
-                    String typeName = this.klass.getTypeName();
+                    var typeName = this.klass.getTypeName();
                     return new ReflectException(String.format("不存在一个字段: [%s.%s]", typeName, fieldName));
                 });
     }
@@ -129,9 +129,9 @@ public class ClassReflectorImpl<T> implements ClassReflector<T> {
     }
 
     @SuppressWarnings("unchecked")
-    private List<ConstructorReflector<? extends T>> initConstructorReflectors() {
-        Constructor<?>[] constructors = this.klass.getDeclaredConstructors();
-        List<ConstructorReflector<? extends T>> constructorReflectorList = new ArrayList<>(constructors.length);
+    private List<ConstructorReflector<T>> initConstructorReflectors() {
+        var constructors = this.klass.getDeclaredConstructors();
+        List<ConstructorReflector<T>> constructorReflectorList = new ArrayList<>(constructors.length);
         for (Constructor<?> constructor : constructors) {
             constructorReflectorList.add(new ConstructorReflectorImpl<>((Constructor<T>) constructor));
         }
@@ -139,7 +139,7 @@ public class ClassReflectorImpl<T> implements ClassReflector<T> {
     }
 
     private List<MethodReflector<?>> initMethodReflectors() {
-        Method[] methods = this.klass.getDeclaredMethods();
+        var methods = this.klass.getDeclaredMethods();
         List<MethodReflector<?>> methodReflectorList = new ArrayList<>(methods.length);
         for (Method method : methods) {
             methodReflectorList.add(new MethodReflectorImpl<>(method));
@@ -148,7 +148,7 @@ public class ClassReflectorImpl<T> implements ClassReflector<T> {
     }
 
     private List<FieldReflector<?>> initFieldReflectors() {
-        Field[] fields = this.klass.getDeclaredFields();
+        var fields = this.klass.getDeclaredFields();
         List<FieldReflector<?>> fieldReflectorList = new ArrayList<>(fields.length);
         for (Field field : fields) {
             fieldReflectorList.add(new FieldReflectorImpl<>(field));

@@ -15,14 +15,14 @@ public interface ClassReflector<T> extends Reflector {
      * 获取所有的构造器反射器。
      * @return 所有的构造器反射器。
      */
-    List<ConstructorReflector<? extends T>> constructorReflectors();
+    List<ConstructorReflector<T>> constructorReflectors();
 
     /***
      * 获取某一个构造器反射器，不存在则抛出异常。
      * @param constructorParameterTypes 构造器参数类型列表。
      * @return 某一个构造器反射器。
      */
-    ConstructorReflector<? extends T> constructorReflector(Class<?>... constructorParameterTypes);
+    ConstructorReflector<T> constructorReflector(Class<?>... constructorParameterTypes);
 
     /**
      * 获取所有(只获取本类的方法反射器)的方法反射器。

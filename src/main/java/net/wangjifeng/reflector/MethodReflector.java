@@ -74,4 +74,10 @@ public interface MethodReflector<M> extends Reflector {
      * @return 方法参数的泛型。
      */
     public Type[] methodParamGenerics();
+
+    /**
+     * 获取方法返回值的返回值反射器。
+     * @return 方法返回值的返回值反射器。
+     */
+    public ReturnValueReflector returnValueReflector();
 }

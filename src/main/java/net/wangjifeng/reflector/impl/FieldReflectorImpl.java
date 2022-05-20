@@ -31,9 +31,11 @@ public class FieldReflectorImpl<F> implements FieldReflector<F> {
     public F readValue(Object target) {
         return ReflectException.unawareException(() -> {
             if (!isPublic()) {
-                this.field.setAccessible(true);
+                if (this.field.trySetAccessible()) {
+                    return (F) this.field.get(target);
+                }
             }
-            return (F) this.field.get(target);
+            throw new ReflectException(String.format("尝试读取Field:%s失败", this.field.toString()));
         });
     }
 
@@ -41,11 +43,13 @@ public class FieldReflectorImpl<F> implements FieldReflector<F> {
     public void writeValue(Object target, F value) {
         ReflectException.<Void>unawareException(() -> {
             if (!isPublic()) {
-                this.field.setAccessible(true);
+                if (this.field.trySetAccessible()) {
+                    this.field.set(target, value);
+                }
             }
-            this.field.set(target, value);
             return null;
         });
+        throw new ReflectException(String.format("尝试读取Field:%s失败", this.field.toString()));
     }
 
     @Override
